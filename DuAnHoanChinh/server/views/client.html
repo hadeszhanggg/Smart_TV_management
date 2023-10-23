@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Client Page</title>
+    <!-- Link to Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h1>Welcome to Client Page</h1>
+        <!-- Replace this section with the actual content you want to display for the client -->
+        <div>
+            <h3 id="clientData">Client Data:</h3>
+        </div>
+    </div>
+
+    <!-- Link to Bootstrap 5 JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JavaScript for Client Page -->
+    <script>
+        // Function to update client data on the page
+        function updateClientData(data) {
+            $("#clientData").text(`Client Data: ${data}`);
+        }
+
+        // Function to receive real-time updates from the server
+        function receiveRealTimeData() {
+            const eventSource = new EventSource("/real-time-data"); // Replace with the actual URL to receive real-time data from the server
+            eventSource.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                updateClientData(data);
+            };
+        }
+
+        // Call the function to receive real-time data when the page loads
+        $(document).ready(function () {
+            receiveRealTimeData();
+        });
+    </script>
+</body>
+
+</html>

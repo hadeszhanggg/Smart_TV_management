@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Home Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <style>
+        /* Remove the navbar's default margin-bottom and rounded borders */
+        .navbar {
+            margin-bottom: 0;
+            border-radius: 0;
+        }
+
+        /* Set height of the grid so .sidenav can be 100% (adjust as needed) */
+        .row.content {
+            height: 450px
+        }
+
+        /* Set gray background color and 100% height */
+        .sidenav {
+            padding-top: 20px;
+            background-color: #f1f1f1;
+            height: 100%;
+        }
+
+        /* Set black background color, white text and some padding */
+        footer {
+            background-color: #555;
+            color: white;
+            padding: 15px;
+        }
+
+        /* On small screens, set height to 'auto' for sidenav and grid */
+        @media screen and (max-width: 767px) {
+            .sidenav {
+                height: auto;
+                padding: 15px;
+            }
+
+            .row.content {
+                height: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button id="fullscreenBtn" class="btn btn-primary">Fullscreen</button>
+            </div>
+            <ul class="nav navbar-nav navbar-right">
+                <!-- <a id="geolocationAlert" class="alert alert-warning" role="alert" style="display: none;">
+                    Bạn có đồng ý chia sẻ địa điểm địa lý của mình không?
+                    <button class="btn btn-primary ms-2" id="acceptBtn">Đồng ý</button>
+                    <form method="POST" action="/logout" style="display: inline-block;">
+                        <button class="btn btn-secondary ms-2" type="submit" id="declineBtn">Từ chối</button>
+                    </form>
+                </a>-->
+                <div id="interviews"></div>
+
+                <li>
+                    <form method="POST" action="/logout">
+                        <button type="submit" class="btn btn-primary">Logout</button>
+                    </form>
+
+                </li>
+                <li><button id="disconnectBtn" class="btn btn-danger">Disconnect</button></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container-fluid text-center">
+        <div class="col-sm-8 text-left">
+            <div id="dropZone" class="drop-zone"></div>
+            <div id="displayData" id="dragItem" class="draggable-item">Data</div>
+
+        </div>
+        <div><iframe style="width: 500px; height: 700px;"
+                src="https://bkd-interview.imtl.re.kr/interview?i=docassemble.BluekareD:data/questions/interview.yml&new_session=1">Interview</iframe>
+        </div>
+
+    </div>
+    </div>
+    <script>
+        //window.location = "http://192.168.177.1:8090/interview?i=docassemble.BluekareD:data/questions/interview.yml";
+        $(document).ready(function () {
+            // Show geolocation alert and handle user response
+            function showGeolocationAlert() {
+                $("#geolocationAlert").show();
+                $("#acceptBtn").click(function () {
+                    $("#geolocationAlert").hide();
+                    if ("geolocation" in navigator) {
+                        navigator.geolocation.getCurrentPosition(
+                            function (position) {
+                                const latitude = position.coords.latitude;
+                                const longitude = position.coords.longitude;
+                                $.ajax({
+                                    url: `${window.location.origin}/post-geolocation`,
+                                    method: "POST",
+                                    data: {
+                                        latitude: latitude,
+                                        longitude: longitude
+                                    },
+                                    success: function (data) {
+                                        alert("Đã gửi dữ liệu địa điểm địa lý thành công!");
+                                    },
+                                    error: function (err) {
+                                        alert("Lỗi khi gửi dữ liệu địa điểm địa lý: " + err);
+                                    }
+                                });
+                            },
+                            function (error) {
+                                alert("Lỗi khi truy cập địa điểm địa lý: " + error.message);
+                            }
+                        );
+                    } else {
+                        alert("Trình duyệt không hỗ trợ địa điểm địa lý.");
+                    }
+                });
+                $("#declineBtn").click(function () {
+                    alert("Bạn đã từ chối chia sẻ địa điểm địa lý.");
+                });
+            }
+            showGeolocationAlert();
+            //full screen api
+            $("#fullscreenBtn").click(function () {
+                const element = document.documentElement; // Get the root element (the whole page)
+                if (document.fullscreenElement || document.webkitFullscreenElement ||
+                    document.mozFullScreenElement || document.msFullscreenElement) {
+                    // Exit fullscreen mode
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                } else {
+                    // Enter fullscreen mode
+                    if (element.requestFullscreen) {
+                        element.requestFullscreen();
+                    } else if (element.webkitRequestFullscreen) {
+                        element.webkitRequestFullscreen();
+                    } else if (element.mozRequestFullScreen) {
+                        element.mozRequestFullScreen();
+                    } else if (element.msRequestFullscreen) {
+                        element.msRequestFullscreen();
+                    }
+                }
+            });
+        });
+
+        const userId = "<%= id %>";
+        const socket = io.connect('http://172.16.133.65:8000');
+        socket.emit('joinRoom', { roomName: 'user:' + userId });
+        // Kiểm tra sự kiện 'connection'
+        socket.on('connect', () => {
+            console.log('Socket connected with ID:', socket.id);
+        });
+
+        // Kiểm tra sự kiện 'userData'
+        socket.on('userData', (data) => {
+            console.log('Received userData from server:', { data });
+            displayUserData(data);
+        });
+
+        function displayUserData(data) {
+            const displayData = document.getElementById('displayData');
+            displayData.innerHTML = ''; // Clear previous content
+
+            if (data.gvien) {
+                displayData.innerHTML += `Giáo viên: ${data.gvien}`;
+            }
+            if (data.bcao) {
+                displayData.innerHTML += `Báo cáo: ${data.bcao}`;
+            }
+        }
+
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        disconnectBtn.addEventListener('click', () => {
+            socket.disconnect();
+            console.log('Socket connection closed.');
+        });
+        //Drag Drop API
+
+        $(".draggable-item").draggable(); // Biến các phần tử có class "draggable-item" thành đối tượng có thể kéo
+
+        $(".drop-zone").droppable({ // Xử lý khu vực thả
+            drop: function (event, ui) {
+                ui.draggable.appendTo(this); // Di chuyển đối tượng kéo vào khu vực thả
+            }
+        });
+
+
+
+    </script>
+</body>
+
+</html>

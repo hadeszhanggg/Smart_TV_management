@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Admin Dashboard</title>
+    <!-- Link to Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h1>Welcome to Admin Dashboard</h1>
+        <h3>Active Users:</h3>
+        <ul id="activeUsersList"></ul>
+        <button id="queryUserData" class="btn btn-primary mt-3">Query User Data</button>
+    </div>
+
+    <!-- Link to Bootstrap 5 JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JavaScript for Admin Dashboard -->
+    <script>
+        // Function to display active users on the dashboard
+        function displayActiveUsers(users) {
+            const userList = $("#activeUsersList");
+            userList.empty();
+            users.forEach(user => {
+                userList.append(`<li>${user.name} - ${user.role}</li>`);
+            });
+        }
+
+        // Function to query user data from the server
+        function queryUserData() {
+            $.ajax({
+                url: "/query-user-data", // Replace with the actual URL to query user data from the server
+                method: "GET",
+                dataType: "json",
+                success: function (data) {
+                    displayActiveUsers(data);
+                },
+                error: function (error) {
+                    console.error("Error querying user data:", error);
+                }
+            });
+        }
+
+        // Event handler for clicking the "Query User Data" button
+        $("#queryUserData").click(function () {
+            queryUserData();
+        });
+
+        // Initial data display when the page loads
+        $(document).ready(function () {
+            queryUserData();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,39 @@
+---
+question: "What's your name ?"
+fields:
+  - no label: first_name
+---
+question: "today is ?"
+fields:
+  - no label: date
+---
+question: "Summary of work for the week"
+fields:
+  - no label: summary
+---
+question: "details"
+fields:
+  - no label: details
+---
+question: "What's your plan for next week ?"
+fields:
+  - no label: plan
+---
+
+question: "comments"
+fields:
+  - no label: comments
+---
+mandatory: true
+question: |
+  Here is your document.
+subquestion: |
+  Does it meet your approval?
+yesno: user_approves
+attachment:
+  name: Your letter
+  filename: letter
+  docx template file: YYMMDD_Weekly_Report_LASTNAME_FIRSTNAME_1.docx
+  valid formats:
+    - pdf
+    - docx
